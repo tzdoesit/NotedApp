@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Notes</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        ul { list-style: none; padding: 0; }
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        input { width: 70%; padding: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Notes</h1>
+
+    <input id="note-input" placeholder="Write a note...">
+    <button id="add-button">Add</button>
+
+    <ul id="note-list"></ul>
+
+    <script>
+        const input = document.getElementById("note-input");
+        const addButton = document.getElementById("add-button");
+        const list = document.getElementById("note-list");
+
+        async function loadNotes() {
+            const response = await fetch("/notes");
+            const notes = await response.json();
+
+            list.textContent = "";
+
+            for (const note of notes) {
+                const item = document.createElement("li");
+
+                const label = document.createElement("span");
+                label.textContent = note.text;
+
+                const button = document.createElement("button");
+                button.textContent = "delete";
+                button.onclick = () => deleteNote(note.id);
+
+                item.appendChild(label);
+                item.appendChild(button);
+                list.appendChild(item);
+            }
+        }
+
+        async function addNote() {
+            const text = input.value.trim();
+            if (text === "") return;
+
+            await fetch ("/notes", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: text })
+            });
+
+        }
+    </script>
+
+</body>
+</html>
