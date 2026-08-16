@@ -1,5 +1,6 @@
 import sqlite3
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -19,6 +20,10 @@ connection.close()
 
 class NoteIn(BaseModel):
     text: str
+
+@app.get("/")
+def index():
+    return FileResponse("index.html")
 
 @app.get("/notes")
 def list_notes():

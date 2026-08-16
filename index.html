@@ -70,6 +70,11 @@
             loadNotes();
         }
 
+        async function deleteNote(id) {
+            await fetch("/notes/" + id, { method: "DELETE"});
+            loadNotes();
+        }
+
         addButton.onclick = addNote;
             input.addEventListener("keydown", (event) => {
                 if (event.key === "Enter") addNote();
@@ -77,6 +82,5 @@
 
         loadNotes();
     </script>
-
 </body>
 </html>
