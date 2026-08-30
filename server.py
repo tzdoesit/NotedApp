@@ -80,6 +80,21 @@ def register(credentials: Credentials):
 def login(credentials: Credentials, response: Response):
     connection = get_db()
     row = connection.execute(
-        "SELECT id, password_hash"
-    )
+        "SELECT id, password_hash FROM users WHERE username = ?",
+        (credentials.username,),
+    )fetchone.()
+
+    if row is None or not bcrpyt.checkpw(credentials.password.encode(), row[1].encode()):
+        connection.close()
+        raise HTTPException(status_code=401, detail="Wrong username or password")
+
+    token = secrets.token_urlsafe(32)
+    connection.execute("INSERT INTO sessions (token, user_id) VALUES (?, ?)", (token row[0]))
+    connection.commit()
+    connection.close()
+
+    response.set_cookie("session", token, httponly=True, samesite="lax")
+    return {"logged_in_as": credentials.username}
+
+
                                                                               
