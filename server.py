@@ -14,7 +14,7 @@ def get_db():
     return sqlite3.connect(HERE / "notes.db")
 
 connection = get_db()
-connection = executescript("""
+connection.executescript("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
@@ -22,7 +22,7 @@ connection = executescript("""
     );
     CREATE TABLE IF NOT EXISTS sessions (
         token TEXT PRIMARY KEY,
-        user_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL
     );
     CREATE TABLE IF NOT EXISTS notes (
         id INTEGER PRIMARY KEY,
@@ -62,7 +62,7 @@ def register(credentials: Credentials):
 
     try:
         connection.execute(
-            "INSERT INTO users (username, password_hash) VALUE (?, ?),
+            "INSERT INTO users (username, password_hash) VALUES (?, ?)",
             (credentials.username, hashed.decode()),
         )
         connection.commit()    
@@ -82,14 +82,14 @@ def login(credentials: Credentials, response: Response):
     row = connection.execute(
         "SELECT id, password_hash FROM users WHERE username = ?",
         (credentials.username,),
-    )fetchone.()
+    ).fetchone()
 
     if row is None or not bcrpyt.checkpw(credentials.password.encode(), row[1].encode()):
         connection.close()
         raise HTTPException(status_code=401, detail="Wrong username or password")
 
     token = secrets.token_urlsafe(32)
-    connection.execute("INSERT INTO sessions (token, user_id) VALUES (?, ?)", (token row[0]))
+    connection.execute("INSERT INTO sessions (token, user_id) VALUES (?, ?)", (token, row[0]))
     connection.commit()
     connection.close()
 

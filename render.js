@@ -19,3 +19,24 @@ function render() {
     }
 }
 
+async function loadNotes() {
+    const response = await fetch("/notes");
+    notes = await response.json();
+    render();
+}
+
+async function addNote() {
+    const text = input.value.trim();
+    if (text === "") return;
+
+    const response await fetch("/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json"},
+        body: JSON.stringify({ text: text })
+    });
+    const created = await response.json();
+
+    notes.push(created);
+    input.value = "";
+    render();
+}
