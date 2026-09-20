@@ -56,9 +56,12 @@ def current_user(session: str = Cookie(default=None)):
         raise HTTPException(status_code=401, detail="Not logged in")
     return row[0]
 
+
 @app.post("/register")
 def register(credentials: Credentials):
     hashed = bcrypt.hashpw(credentials.password.encode(), bcrypt.gensalt())
+
+    connection = get_db()
 
     try:
         connection.execute(
@@ -84,7 +87,7 @@ def login(credentials: Credentials, response: Response):
         (credentials.username,),
     ).fetchone()
 
-    if row is None or not bcrpyt.checkpw(credentials.password.encode(), row[1].encode()):
+    if row is None or not bcrypt.checkpw(credentials.password.encode(), row[1].encode()):
         connection.close()
         raise HTTPException(status_code=401, detail="Wrong username or password")
 
@@ -120,6 +123,13 @@ def delete_note(note_id: int, user_id: int = Depends(current_user)):
     if removed == 0:
         raise HTTPException(status_code=404, detail="No note with that id")
     return {"deleted": note_id}
+
+@app.get("/notes")
+def list_notes(user_id: int = Depends(current_user)):
+    connection = get_db()
+    rows = connection.execute(
+        "SELECT id, text FROM notes WHERE user_id = ?", (user_id,)
+    ).fetchall()
 
 @app.get("/")
 def index():
