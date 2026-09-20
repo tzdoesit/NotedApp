@@ -130,6 +130,8 @@ def list_notes(user_id: int = Depends(current_user)):
     rows = connection.execute(
         "SELECT id, text FROM notes WHERE user_id = ?", (user_id,)
     ).fetchall()
+    connection.close()
+    return [{"id": row[0], "text": row[1]} for row in rows]
 
 @app.get("/")
 def index():
