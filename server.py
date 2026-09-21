@@ -5,13 +5,15 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Response, Cookie, Depends
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+import os
 
+DB_PATH = os.path.join(os.path.dirname(__file__), "notes.db")
 
 HERE = Path(__file__).parent
 app = FastAPI()
 
 def get_db():
-    return sqlite3.connect(HERE / "notes.db")
+    return sqlite3.connect(DB_PATH)
 
 connection = get_db()
 connection.executescript("""
@@ -96,7 +98,7 @@ def login(credentials: Credentials, response: Response):
     connection.commit()
     connection.close()
 
-    response.set_cookie("session", token, httponly=True, samesite="lax")
+    response.set_cookie("session", token, httponly=True, samesite="lax", secure=True)
     return {"logged_in_as": credentials.username}
 
 
