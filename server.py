@@ -122,7 +122,7 @@ def login(credentials: Credentials, response: Response):
 
 
 @app.post("/notes")
-def add_note(note: NoteIn, user_id: int = Depends(current_user)):
+async def add_note(note: NoteIn, user_id: int = Depends(current_user)):
     connection = get_db()
     cursor = connection.execute(
         "INSERT INTO notes (text, user_id) VALUES (?, ?)", (note.text, user_id)
@@ -130,10 +130,13 @@ def add_note(note: NoteIn, user_id: int = Depends(current_user)):
     connection.commit()
     new_id = cursor.lastrowid
     connection.close()
-    return {"id": new_id, "text": note.text}
+    created = {"id": new_id, "text": note.text}
+    # Broadcast the new note to all connected WebSocket clients for this user
+    await broadcast(user_id, {"action": "new_note", "note": created})
+    return created
 
 @app.delete("/notes/{note_id}")
-def delete_note(note_id: int, user_id: int = Depends(current_user)):
+async def delete_note(note_id: int, user_id: int = Depends(current_user)):
     connection = get_db()
     cursor = connection.execute(
         "DELETE FROM notes WHERE id = ? AND user_id = ?", (note_id, user_id)
@@ -143,6 +146,7 @@ def delete_note(note_id: int, user_id: int = Depends(current_user)):
     connection.close()
     if removed == 0:
         raise HTTPException(status_code=404, detail="No note with that id")
+    await broadcast(user_id, {"action": "delete_note", "note_id": note_id})
     return {"deleted": note_id}
 
 @app.get("/notes")
