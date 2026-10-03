@@ -2,7 +2,7 @@ import sqlite3
 import secrets
 import bcrypt
 from pathlib import Path
-from fastapi import FastAPI, HTTPException, Response, Cookie, Depends
+from fastapi import FastAPI, HTTPException, Response, Cookie, Depends, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import os
@@ -42,22 +42,27 @@ class Credentials(BaseModel):
 class NoteIn(BaseModel):
     text: str
 
-def current_user(session: str = Cookie(default=None)):
-    if session is None:
-        raise HTTPException(status_code=401, detail = "Not logged in") #incorrect authentication credentials
 
+def user_from_token(token):
+    if token is None:
+        return None
     connection = get_db()
-
     row = connection.execute(
-        "SELECT user_id FROM sessions WHERE token = ?", (session,)
+        "SELECT user_id FROM sessions WHERE token = ?", (token,)
     ).fetchone()
-
     connection.close()
+    return row[0] if row else None
 
-    if row is None:
+def current_user(session: str = Cookie(default=None)):
+    user_id = user_from_token(session)
+    if user_id is None:
         raise HTTPException(status_code=401, detail="Not logged in")
-    return row[0]
+    return user_id
 
+connections: dict[int, list[WebSocket]] = {}
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WwebSocket, session: str = )
 
 @app.post("/register")
 def register(credentials: Credentials):
