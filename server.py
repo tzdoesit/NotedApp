@@ -132,7 +132,7 @@ async def add_note(note: NoteIn, user_id: int = Depends(current_user)):
     connection.close()
     created = {"id": new_id, "text": note.text}
     # Broadcast the new note to all connected WebSocket clients for this user
-    await broadcast(user_id, {"action": "new_note", "note": created})
+    await broadcast(user_id, {"type": "added", "note": created})
     return created
 
 @app.delete("/notes/{note_id}")
@@ -146,7 +146,7 @@ async def delete_note(note_id: int, user_id: int = Depends(current_user)):
     connection.close()
     if removed == 0:
         raise HTTPException(status_code=404, detail="No note with that id")
-    await broadcast(user_id, {"action": "delete_note", "note_id": note_id})
+    await broadcast(user_id, {"type": "deleted", "note_id": note_id})
     return {"deleted": note_id}
 
 @app.get("/notes")

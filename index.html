@@ -56,6 +56,29 @@
     const list = document.getElementById("note-list");
 
     let notes = [];
+    let socket = null;
+
+    function connect() {
+      const protocol = location.protocol === "https:" ? "wss" : "ws";
+      socket = new WebSocket(`${protocol}://${location.host}/ws`);
+
+      socket.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.type === "added") {
+          if (!notes.some(note => n.id === msg.note.id)) notes.push(msg.note);
+        }
+
+        else if (msg.type === "deleted") {
+          notes = notes.filter(n = > n.id !== msg.note_id);
+        }
+      render();
+    };
+
+      socket.onclose = () => {
+        socket = null;
+        setTimeout(() => {if (!appSection.hidden) loadNotes(); }, 2000);
+      };
+    }
 
     function showAuth() {
       authSection.hidden = false;
