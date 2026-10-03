@@ -62,7 +62,21 @@ def current_user(session: str = Cookie(default=None)):
 connections: dict[int, list[WebSocket]] = {}
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WwebSocket, session: str = )
+async def websocket_endpoint(websocket: WebSocket, session: str = Cookie(default=None)):
+    user_id = user_from_token(session)
+    if user_id is None:
+        await websocket.close(code=1008)
+        return
+
+    await websocket.accept()
+    connections.setdefault(user_id, []).append(websocket)
+
+async def broadcast(user_id: int, message: dict):
+    for socket in list (connections.get(user_id, [])):
+        try:
+            await socket.send_json(message)
+        except Exception:
+            connections[user_id].remove(socket)
 
 @app.post("/register")
 def register(credentials: Credentials):
