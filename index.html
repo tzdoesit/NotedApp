@@ -69,7 +69,7 @@
         }
 
         else if (msg.type === "deleted") {
-          notes = notes.filter(n = > n.id !== msg.note_id);
+          notes = notes.filter(n => n.id !== msg.note_id);
         }
       render();
     };
